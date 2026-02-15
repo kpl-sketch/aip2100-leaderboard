@@ -1,7 +1,8 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const kv = Redis.fromEnv();
 
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-key');
@@ -13,7 +14,6 @@ export default async function handler(req, res) {
       return res.status(200).json(posts);
     }
 
-    // All write operations require admin key
     const adminKey = req.headers['x-admin-key'];
     const validKey = process.env.ADMIN_KEY || 'aip2100admin';
     if (adminKey !== validKey) {
@@ -21,7 +21,6 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      // Add one or more posts
       const body = req.body;
       const existing = await kv.get('aip2100-posts') || [];
       const newPosts = Array.isArray(body) ? body : [body];
@@ -40,7 +39,6 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-      // Update a post by id
       const { id, ...changes } = req.body;
       if (!id) return res.status(400).json({ error: 'Mangler id' });
       const existing = await kv.get('aip2100-posts') || [];
